@@ -1,0 +1,435 @@
+---
+title             : "Latent Semantic Analysis Applied to Authorship Questions in Textual Analysis"
+shorttitle        : "LSA Authorship"
+
+author: 
+  - name          : "Caleb Z. Marshall"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "901 S. National Ave, Springfield, MO 65897"
+    email         : "Marshall628@live.missouristate.edu"
+  - name          : "Erin M. Buchanan"
+    affiliation   : "1"
+
+affiliation:
+  - id            : "1"
+    institution   : "Missouri State University"
+
+author_note: >
+  Caleb Z. Marshall is an undergraduate student in mathematics and psychology at Missouri State University. Erin M. Buchanan is an Associate Professor of Quantitative Psychology at Missouri State University.
+
+abstract: > 
+  This study used a multi-dimensional text modeling technique, latent semantic analysis (LSA), to examine questions of authorship within the biblical book Isaiah. The Deutero-Isaiah hypothesis, which cites significant lexical and semantic differences within Isaiah as evidence for tripartite authorship, is well supported among biblical scholars. This quantitative textual analysis explored authorship and contextual semantics of Isaiah through LSA by examining the cosine vector relatedness between and across chapters and proposed authors. Because of the general semantic asymmetry across Isaiah, it is reasonable to conclude that a portion of Isaiah's semantic change is the result of multiple authorship. Further, our analysis helps demonstrate how statistically focused psycholinguistic work may be used to answer seemingly philosophical or subjective questions in other research fields.
+
+keywords          : "applied research, latent semantic analysis, semantics"
+
+bibliography      : ["caleb refs.bib"]
+#csl               : ["sage-harvard.csl"] ##turn off this line to get APA style
+
+figsintext        : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+lineno            : yes
+
+lang              : "english"
+class             : "man"
+#class             : "man, mask" #creates blinded manuscript
+output            : papaja::apa6_pdf
+---
+
+```{r functions-for-d, message=FALSE, warning=FALSE, include=FALSE}
+library("papaja")
+
+####effect size confidence interval functions####
+##MOTE can be found at http://www.github/doomlab/MOTE 
+library(MOTE)
+
+p.value = function(p, k) {
+    if(p < .001){
+      pout = "< .001"
+      } else { pout = apa(p, k, F)}
+  return(pout)
+}
+
+d.singlet = function (m = 0, u = 0, sd = 1, n = 10, a = .05, k = 3) {
+  library(MBESS)
+  se = sd / sqrt(n)
+  d = (m - u) / sd
+  t = (m - u) / se
+  ncpboth = conf.limits.nct(t, (n-1), conf.level = (1-a), sup.int.warns = TRUE)
+  dlow = ncpboth$Lower.Limit / sqrt(n)
+  dhigh = ncpboth$Upper.Limit / sqrt(n)
+  Mlow = m - se*qt(a/2, n-1, lower.tail = FALSE)
+  Mhigh = m + se*qt(a/2, n-1, lower.tail = FALSE)
+  p = pt(abs(t), n-1, lower.tail = F)*2
+  
+  output = list("d" = apa(d, k, T), 
+                "dlow" = apa(dlow, k, T), 
+                "dhigh" = apa(dhigh, k, T), 
+                "Mlow" = apa(Mlow, k, F), 
+                "Mhigh" = apa(Mhigh, k, F),
+                "t" = apa(t, k, T),
+                "p" = p.value(p, k), 
+                "m" = apa(m, k, F),
+                "sd" = apa(sd, k, F),
+                "df" = (n-1))
+  return(output)
+}
+
+d.indt = function(m1 = 0, m2 = 0, sd1 = 1, sd2 = 1, n1 = 10, n2 = 10, a = 0.05, k = 3) 
+{
+    library(MBESS)
+    spooled = sqrt(((n1 - 1) * sd1^2 + (n2 - 1) * sd2^2)/(n1 + 
+        n2 - 2))
+    d = (m1 - m2)/spooled
+    se1 = sd1/sqrt(n1)
+    se2 = sd2/sqrt(n2)
+    sepooled = sqrt((spooled^2/n1 + spooled^2/n2))
+    t = (m1 - m2)/sepooled
+    ncpboth = conf.limits.nct(t, (n1+n2-2), conf.level = (1-a), sup.int.warns = TRUE)
+    dlow = ncpboth$Lower.Limit/sqrt(((n1 * n2)/(n1 + n2)))
+    dhigh <- ncpboth$Upper.Limit/sqrt(((n1 * n2)/(n1 + n2)))
+    M1low <- m1 - se1 * qt(a/2, n1 - 1, lower.tail = FALSE)
+    M1high <- m1 + se1 * qt(a/2, n1 - 1, lower.tail = FALSE)
+    M2low <- m2 - se2 * qt(a/2, n2 - 1, lower.tail = FALSE)
+    M2high <- m2 + se2 * qt(a/2, n2 - 1, lower.tail = FALSE)
+    p <- pt(abs(t), (n1 - 1 + n2 - 1), lower.tail = F) * 2
+   
+    output = list("d" = apa(d, k, T), 
+                "dlow" = apa(dlow, k, T), 
+                "dhigh" = apa(dhigh, k, T), 
+                "M1low" = apa(M1low, k, F), 
+                "M1high" = apa(M1high, k, F),
+                "M2low" = apa(M2low, k, F), 
+                "M2high" = apa(M2high, k, F),
+                "t" = apa(t, k, T),
+                "p" = p.value(p, k), 
+                "m1" = apa(m1, k, F),
+                "m2" = apa(m2, k, F),
+                "sd1" = apa(sd1, k, F),
+                "sd2" = apa(sd2, k, F),
+                "df" = (n1+n2-2))
+  return(output) 
+}
+
+```
+From a linguistic standpoint, perhaps nothing is as central to the function of language as an individual word's meaning [@Jones2015]. Yet meaning as a cognitive action presents a challenge to contemporary methods of empirical research within psychology, as semantics is a core base to understanding psychological phenomenon. While this study is focused specifically on computational linguistics, it intrinsically depends on related theories of memory and cognition. Within psychology, the conceptual understanding of a specified item or process is known as semantic memory. Cognitively, semantic memory is the individual's ability to abstract and store usable information from personal experience, or episodic memory. More generally, semantics is often considered our knowledge for facts and world knowledge [@Tulving1972], and the semantic system stores both conceptual and propositional knowledge. For example, the semantic memory of *dog* would contain conceptual information about dogs (*has a tail*, *has fur*), which are built in a propositional network wherein links can be evaluated as true or false [@Collins1969; @Collins1975].
+
+Newer models have incorporated associative or thematic information about concepts, such as *are friendly*; *are found in parks* [@Lund1996] and linguistic elements, such as part of speech [@Jones2007]. The challenge of studying semantic memory lies in its complexity. Rather than possessing the rote taxonomy of a dictionary or encyclopedia, semantic memory is surprisingly nuanced and flexible. Besides being deeply integrated with episodic memory, semantic memory also informs most other cognitive processes, such as abstract reasoning, decision making, language processing and perception. And, in most cognitive theories of semantic memory, individual concepts are interactive, meaning that item-by-item memories are conceptually interdependent upon one another.
+\newline
+
+## Connectionist Models of Semantic Memory
+
+The connectedness of semantic memory gave rise to varied computational models of semantic memory which translate semantic memory networks into mathematical information. The first of these models, designed by @Collins1969 and @Collins1975, showed great success at understanding the hierarchical structure and spreading activation in memory using the conceptual parts of memory as nodes, and the propositional parts of memory as connections between nodes. Propositions possess Boolean logic; that is, they can be either true or false. Mathematically, this property is utilized in several semantic memory models, such as the connectionist networks of @Meyer1993. Within Rumelhart networks, concepts and propositions are both presented as nodes in an interconnected model of semantic memory [@Rogers2006; @McClelland1988; @McClelland1989]. These nodes are then joined by weights that determine relatedness to one another, which creates a connected architecture and hence, the connectionist name associated with these models. 
+
+These weighted connections have been crucial to understanding neural connections in memory [@Moss2000; @OReilly2012; @Rogers2004]. Models are built with input nodes that lead through a hidden, unseen layer of nodes to an output nodes. The input nodes are fed information by activating sets of nodes, which is processed through the hidden layer, and the output layer produces an answer. For example, a *dog* output might be found with an input of *tail*, *fur*, and *ears*. These models are meant to mimic learning, as different forms of adjustment on the weights are implemented to study changes as the model is trained [@McClelland1988; @Regier2005]. The implementation of learning has distinct advantages over previous models. However, connectionist models are built around an expected environment rather than an extant, specified corpus of linguistic data [@Jones2015]. 
+\newline
+
+## Distributional Models: Language and Semantic Memory
+
+As a medium for large-scale semantic memory observation and modeling, written language has shown to be quite usable. Written language, as a complex, emergent process of human cognition patterns well onto existing mathematical models. Lexical analysis, which focuses on count aspects of vocabulary, comparing observed frequency in a body of text (i.e. corpus) with theoretical distributions based on research assumptions, is an example of early statistics-based textual analysis [@Kucera1967]. Discourse analysis, conversely, uses grammatical algorithms to examine syntactic structure within a group of documents, or corpus [@Pace1998]. In terms of psychological data, written language possesses extremely low-volatility and is often available in physical or electronic archives [@Brysbaert2009]. This ease of access and reliability encouraged the development of a computational linguistic approach to semantic memory modeling which focused on extant linguistic structures within each text as opposed to conceptual network constraints. In this study, we focused on one such area, distributional models.
+
+Distributional models of semantic memory are based on a simple linguistic theory: words with similar meanings often co-occur in each section of text [@Harris1954]. This phenomenon is statistically advantageous because it allows the semantic architecture of an individual text to be determined from the co-occurrence frequency of its individual words. By nature, all distributional models of semantic memory are centered on word frequency distribution, which is itself a component of lexical analysis. However, a wealth of mathematical techniques have been developed to convert these small-world lexical effects into large, complex models of discourse analysis. These larger, mathematically complex models have proven to be quite accurate in modeling many cognitive phenomena, including semantic memory architecture [@Rogers2006; @Cree2012]. 
+\newline
+
+## Latent Semantic Analysis 
+
+For this study, we used a distributional modeling technique called Latent Semantic Analysis [@Landauer1998; @Landauer1997]. Latent Semantic Analysis (LSA) is a method of analyzing multi-document collections or archives (text corpora) using matrix algebra, singular values decomposition, and trigonometric eigenvector calculations. Before discussing the mechanics of LSA, it is important to note that it is not the only distributional model capable of semantically modeling large text corpora; however, LSA excels at creating comprehensible models of static semantic memory within a given set of documents and has been applied to many areas of psychological study, from problem solving [@Quesada2001] to knowledge acquisition [@Landauer1997]. Pioneered by @Landauer1998, LSA computes the contextual semantics of a given word based on the terms which co-occur with it, and by nature, those which do not. In computational linguistics, context refers to the general linguistic environment which surrounds a given unit of language (i.e. word, paragraph, document). Thus, contextual semantics is the referential meaning of a given word or phrase based on nearby co-occurring terms. As an example, take the party game charades. If someone said, *it runs and barks and likes to play*, you would immediately shout, *dog*. Contextual semantics functions in a similar manner: derive a word's meaning simply by examining the words surrounding it. This concept is central to all distributional models.
+
+By understanding how concepts are related, we can also use LSA's quantification of multiple terms to build models of large semantic and thematic information in documents. This interpretation is accomplished using a document-by-term matrix, with rows corresponding to term frequency and columns representing user defined bodies of text within a corpus. Thus, the initial text matrix utilized by LSA is nothing more than a record of word frequency within the corpora. This matrix contains the raw linguistic data from which the contextual semantics of individual words will be derived. However, computationally, the early text matrices of LSA resemble nothing more than a simple frequentist table of word occurrence in a corpus [@Landauer1998]. Next, the original text matrix is manipulated to create a high-dimensional space. In this semantic space model, words are represented as non-linear points. Contextual semantic meaning, based on frequency, is modeled as intersecting vector values between these points. Following complex dimension reduction, the angles produced by the meeting of these vectors are then calculated with a simple cosine function, with larger cosines corresponding to greater semantic similarity and vice-versa [@Gunther2016]. Overall, much of this process is similar or even identical to common statistical research methods in behavioral science (i.e. correlation), although cosine functions have a distinct advantage of representing multi-dimensional space, rather than linear relationships. 
+
+What characterizes LSA is its use of singular-value decomposition, an algebraic technique which reduces the size of a matrix while maintaining row-to-column congruence [@Berry1995]. Using eigendecomposition (a generalized means of matrix factorization), singular-value decomposition factors the original m x n text matrix M into three separate matrices. These are: U, a unitary, m x m matrix which models an orthonormal space of the semantic model; V, a unitary, n x n matrix which models a document space analogous to U; and $\Sigma$, a rectangular, diagonal matrix of singular values which intersects U and V [@Jones2015]. Thus, the original text matrix M can be represented as a product of its factorized matrices U, V and $\Sigma$. After singular value decomposition, the resulting factorized matrices are used to create a Euclidean, three-dimensional semantic space. Individual words are then represented as points in this lower dimensional space, which utilizes the diagonal singular values matrix S to relate the orthonormal word occurrence matrix U to the term-to-document frequency matrix $V*$. Thus, a word's orientation in this resulting semantic space is a geometric expression of its expected meaning versus its contextual semantic meaning. Moreover, semantic similarity can easily be computed based on the cosine of the vectors between word points which are expressions of the singular values contained in the $\Sigma$ matrix.
+
+## Textual Analysis Using LSA
+
+LSA's ability to transform high dimensional, complex text matrices into three-dimensional semantic spaces is the core of its usability. As a means of large data set manipulation, LSA is multifunctional, with applications from testing reading skill with greater precision in traditional read-aloud experiments [@Magliano2003] to quantifying context-asymmetry and item comparison, as used by @Foltz1998 to measure document coherence. @Foltz1998 compared the vectors created by LSA to predict participants' perception of document coherence, which is the overall similarity between separate bodies of text. While the specific purpose of their study was to predict and measure document-by-document coherence, they also demonstrated that participants' perception of overall document coherence is formed by interrelating their cognitive understanding of contextual semantics. The more semantic overlap two documents share, the greater likelihood that participants would perceive document-to-document coherence. Thus, by comparing the corresponding documents' eigenvectors produced by singular-value decomposition, LSA was demonstrated to be a reliable predictor for human judgments of document coherence. In theory, this finding occurred because the vectors produced by singular-value decomposition in LSA seem to approximate human understanding of contextual semantic meaning. 
+
+## Practical Applications of LSA: The Isaiah Scrolls and Deutero-Isaiah 
+
+The application of LSA to textual analysis is tantalizing, especially with the extreme processing power and modeling flexibility which singular-value decomposition affords the computational linguistic researcher. The @Foltz1998 research demonstrates LSA performs well in predicting human perceptions of textual coherence, as well as more recent studies into the application of LSA [@Hofmann2001; @Landauer2002; @Kulkarni2014; @Wang2015]. And, statistically, there is no difference in methodology between proactively applying LSA as a predictive measure  and retroactively measuring the contextual semantic similarity of bodies of text in a corpus. The question then becomes: which already-established corpora would benefit from such a technique? Using vector comparison similar to @Foltz1998, we retroactively measured the document-by-document contextual semantics of a pre-existing corpora: the transliteral English Translation of the Book of Isaiah. Surprisingly, many sections of the Hebrew Bible have proven especially difficult to date, organize, and even translate. The Book of Isaiah is one such challenge for Biblical Scholars, mainly because there are no surviving original scrolls which contain the Isaiah text in its entirety. The fragmentary history of the Isaiah scrolls raises serious questions of document coherence and authorship. These doubts are especially troubling since the text is traditionally presented as a unified, single-author work [@Brettler2005].
+
+Within Biblical Studies, these doubts coalesced around a theory of multiple authorship for the Isaiah scrolls known as the Deutero-Isaiah hypothesis. This theory posits that the Isaiah scrolls were the product of three separate authors, each of whom existed in a distinct time-period and geographic location. The Deutero-Isaiah hypothesis is quite popular among Biblical Scholars [@Baltzer2001]. Disagreement exists, especially among traditional scholars [@Coggins1998], as well as questions of term significance [@Sargent2013], and the precise location of authorship [@Goulder2004]. However, earlier statistical analysis of the Isaiah scroll fragments has supported this theory of multiple-authorship [@Pollatschek1981]. Therefore, this study sought to explore the Deutero-Isaiah hypothesis using LSA as an objective measure of semantic and thematic [@Maki2008] relations between chapters of proposed authors. Specific hypotheses are described below.
+
+# Method
+
+##Data Analysis
+
+Each chapter of Isaiah was converted to plain text files and imported in to *R* using *textmatrix()* command found in the *tm* package [@Feinerer2017], excluding English stopwords, such as *the*, *an*, *but*, etc. The term by document matrices were then log transformed and weighted to control for text-size differences. These files were then processed into latent semantic spaces where then created using *lsa()* in the *lsa* package [@Wild2015], which provided corpora specific eigenvector values corresponding to the contextual semantics of each chapter of Isaiah. Following LSA, these 66 latent semantic spaces were logged as transformed text matrices which were used to calculate chapter-to-chapter cosine values as the variable of interest. For each of these cosines, we also calculated chapter distance, defined as the subtraction of the chapter number (i.e. 1-2 is a distance of 1, while 1-50 is a distance of 49). Using the divisions advocated by the Deutero-Isaiah hypothesis (chapters 1-39, 40-55, 56-66), we also coded each chapter combination as within author or across authors. The following hypotheses were tested using this coding system:
+
+###Hypothesis 1
+
+This hypothesis was used to show the applicability of LSA to understanding semantic spaces of literature. Cosine values between chapters within suggested author should be greater than zero, thus, indicating semantic space similarity across one author's writing. Cosine values across authors may be greater than zero, due to common thematic material across authors. This hypothesis will be tested with a single sample *t*-test.
+
+###Hypothesis 2
+
+Given support for hypothesis one, we sought to use the cosine values to examine the Deutero-Isaiah hypothesis by examining how cosine values for within author chapter combinations should be different from across chapter combinations. This hypothesis will be tested with specific *a priori* pairwise independent *t*-tests rather than all possible combinations (i.e. Author 1 will be compared to Author 1-2 and Author 1-3, but not Author 2-3). 
+
+###Hypothesis 3
+
+Hypotheses one and two focused on differences between average semantic space relatedness for proposed author systems in Isaiah. Hypothesis 3, instead, examined how the semantic space for each chapter changed with chapter distance by correlating cosine values with chapter distance. We expected to find negative correlations between chapter distance and cosine as further chapters would be less semantically related to each other. 
+
+Each chapter-to-chapter combination was considered an independent value; however, because chapters do repeat across these pairs, we also examined using a multilevel model controlling for chapter number as a random factor, with no discernible differences. Therefore, the simpler *t*-test analyses are presented below. 
+
+```{r data-import, include=FALSE}
+##import file and set up
+##no working directory necessary if all in the same folder
+master = read.csv("cos_distance.csv")
+master$patterns = paste(master$groupauthor, master$secondauthor)
+master$patterns2 = paste(master$grouptheme, master$secondtheme)
+```
+
+# Results
+
+## Hypothesis 1
+
+For Hypothesis one, each cosine combination of within author and across author was compared against zero using a single sample *t*-test (two-tailed), and the results are presented in Table \@ref(tab:correlation-exp1). We hypothesized that within author cosines would be greater than zero, as this result would imply a related set of chapters creating a semantic space. Across author cosines were hypothesized to be potentially greater than zero, which suggests common thematic material and possibly one authorship. This hypothesis was supported, as all average cosines were significantly greater than zero, as shown in Table \@ref(tab:correlation-exp1). These values are significant even after controlling for Type I error using a Bonferroni correction (i.e. 05 / 6 = .008). Precise *p* values can be found by viewing and running the *R* markdown file at http://osf.io/jywa6. Cohen's *d* values and their non-central confidence intervals [@Cumming2014; @Smithson2001; @Kelley2012] were calculated for each *t*-test as additional evidence for each test. Together, these values indicate large effect sizes to support our hypothesis [@Cohen1992a]. 
+
+```{r correlation-setup, message=FALSE, warning=FALSE, include=FALSE}
+
+####average cosine####
+##is there cohesiveness with and across authors
+##single sample t over zero
+tableprint = matrix(NA, nrow = 6, ncol = 8)
+colnames(tableprint) = c("Comparison", "$M$", "$SD$", "$t$", "$df$", "$p$", "$d$", "95 CI")
+onetoone = d.singlet(m = mean(master$cosine[master$patterns == '1 1']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '1 1']),
+                     n = length(master$cosine[master$patterns == '1 1']),
+                     a = .05,
+                     k = 2)
+
+onetotwo = d.singlet(m = mean(master$cosine[master$patterns == '1 2']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '1 2']),
+                     n = length(master$cosine[master$patterns == '1 2']),
+                     a = .05,
+                     k = 2)
+
+onetothree = d.singlet(m = mean(master$cosine[master$patterns == '1 3']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '1 3']),
+                     n = length(master$cosine[master$patterns == '1 3']),
+                     a = .05,
+                     k = 2)
+
+twototwo = d.singlet(m = mean(master$cosine[master$patterns == '2 2']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '2 2']),
+                     n = length(master$cosine[master$patterns == '2 2']),
+                     a = .05,
+                     k = 2)
+
+twotothree = d.singlet(m = mean(master$cosine[master$patterns == '2 3']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '2 3']),
+                     n = length(master$cosine[master$patterns == '2 3']),
+                     a = .05,
+                     k = 2)
+
+threetothree = d.singlet(m = mean(master$cosine[master$patterns == '3 3']),
+                     u = 0,
+                     sd = sd(master$cosine[master$patterns == '3 3']),
+                     n = length(master$cosine[master$patterns == '3 3']),
+                     a = .05,
+                     k = 2)
+```
+
+```{r correlation-exp1, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+tableprint[1, ] = c("Author 1", onetoone$m, onetoone$sd, onetoone$t,
+                    onetoone$df, onetoone$p, onetoone$d, 
+                    paste(onetoone$dlow, " - ", onetoone$dhigh))
+tableprint[2, ] = c("Author 2", twototwo$m, twototwo$sd, twototwo$t,
+                    twototwo$df, twototwo$p, twototwo$d, 
+                    paste(twototwo$dlow, " - ", twototwo$dhigh))
+tableprint[3, ] = c("Author 3", threetothree$m, threetothree$sd, threetothree$t,
+                    threetothree$df, threetothree$p, threetothree$d, 
+                    paste(threetothree$dlow, " - ", threetothree$dhigh))
+tableprint[4, ] = c("Author 1 - 2", onetotwo$m, onetotwo$sd, onetotwo$t,
+                    onetotwo$df, onetotwo$p, onetotwo$d, 
+                    paste(onetotwo$dlow, " - ", onetotwo$dhigh))
+tableprint[5, ] = c("Author 1 - 3", onetothree$m, onetothree$sd, onetothree$t,
+                    onetothree$df, onetothree$p, onetothree$d, 
+                    paste(onetothree$dlow, " - ", onetothree$dhigh))
+tableprint[6, ] = c("Author 2 - 3", twotothree$m, twotothree$sd, twotothree$t,
+                    twotothree$df, twotothree$p, twotothree$d, 
+                    paste(twotothree$dlow, " - ", twotothree$dhigh))
+apa_table.latex(
+  tableprint,
+  align = c("l", "c", "c", "c", "c", "c", "c", "c"), 
+  caption = "Summary and t Statistics for Hypothesis 1", 
+  note = "Average scores are the mean cosine value for each pair of chapters by author.",
+  escape = FALSE,
+  col.names = c("Comparison", "$M$", "$SD$", "$t$", "$df$", "$p$", "$d$", "$95\\% CI$")
+  )
+```
+
+## Hypothesis 2
+
+For Hypothesis two, we compared matching within author cosines to across author cosines to determine if there is support for different semantic spaces in the Deutero-Isaiah Hypothesis. We expected internal within author cosine values to be larger than across author cosine values, as this result would indicate more cohesive semantic spaces within each proposed author over separate author spaces. Table \@ref(tab:correlation-exp2) includes the independent *t*-test and Cohen's *d* values for these comparisons. Author 1's internal cosine values were significantly larger than the across Author 1 comparisons (see Table \@ref(tab:correlation-exp1) for means and standard deviations); however, the effect sizes and their confidence intervals indicate that this difference was likely significant due to sample size, as effects are small with ranges close to zero. In contrast, Authors 2 and 3 showed significantly larger internal cosine averages than across author cosine averages with large effect sizes and corresponding confidence intervals. 
+
+```{r correlation-exp2, echo=FALSE, warning=FALSE, results='asis'}
+tableprint = matrix(NA, nrow = 6, ncol = 6)
+colnames(tableprint) = c("Comparison", "$t$", "$df$", "$p$", "$d$", "95 CI")
+
+##1-1 to 1-2
+one.onetwo = d.indt(m1 = mean(master$cosine[master$patterns == '1 1']),
+                  m2 = mean(master$cosine[master$patterns == '1 2']),
+                  sd1 = sd(master$cosine[master$patterns == '1 1']), 
+                  sd2 = sd(master$cosine[master$patterns == '1 2']),
+                  n1 = length(master$cosine[master$patterns == '1 1']),
+                  n2 = length(master$cosine[master$patterns == '1 2']),
+                  a = .05,
+                  k = 2)
+
+one.onethree = d.indt(m1 = mean(master$cosine[master$patterns == '1 1']),
+                  m2 = mean(master$cosine[master$patterns == '1 3']),
+                  sd1 = sd(master$cosine[master$patterns == '1 1']), 
+                  sd2 = sd(master$cosine[master$patterns == '1 3']),
+                  n1 = length(master$cosine[master$patterns == '1 1']),
+                  n2 = length(master$cosine[master$patterns == '1 3']),
+                  a = .05,
+                  k = 2)
+
+two.onetwo = d.indt(m1 = mean(master$cosine[master$patterns == '2 2']),
+                  m2 = mean(master$cosine[master$patterns == '1 2']),
+                  sd1 = sd(master$cosine[master$patterns == '2 2']), 
+                  sd2 = sd(master$cosine[master$patterns == '1 2']),
+                  n1 = length(master$cosine[master$patterns == '2 2']),
+                  n2 = length(master$cosine[master$patterns == '1 2']),
+                  a = .05,
+                  k = 2)
+
+two.twothree = d.indt(m1 = mean(master$cosine[master$patterns == '2 2']),
+                  m2 = mean(master$cosine[master$patterns == '2 3']),
+                  sd1 = sd(master$cosine[master$patterns == '2 2']), 
+                  sd2 = sd(master$cosine[master$patterns == '2 3']),
+                  n1 = length(master$cosine[master$patterns == '2 2']),
+                  n2 = length(master$cosine[master$patterns == '2 3']),
+                  a = .05,
+                  k = 2)
+
+three.onethree = d.indt(m1 = mean(master$cosine[master$patterns == '3 3']),
+                  m2 = mean(master$cosine[master$patterns == '1 3']),
+                  sd1 = sd(master$cosine[master$patterns == '3 3']), 
+                  sd2 = sd(master$cosine[master$patterns == '1 3']),
+                  n1 = length(master$cosine[master$patterns == '3 3']),
+                  n2 = length(master$cosine[master$patterns == '1 3']),
+                  a = .05,
+                  k = 2)
+
+three.twothree = d.indt(m1 = mean(master$cosine[master$patterns == '3 3']),
+                  m2 = mean(master$cosine[master$patterns == '2 3']),
+                  sd1 = sd(master$cosine[master$patterns == '3 3']), 
+                  sd2 = sd(master$cosine[master$patterns == '2 3']),
+                  n1 = length(master$cosine[master$patterns == '3 3']),
+                  n2 = length(master$cosine[master$patterns == '2 3']),
+                  a = .05,
+                  k = 2)
+
+tableprint[1, ] = c("Author 1 v Author 1 - 2", one.onetwo$t,
+                    one.onetwo$df, one.onetwo$p, one.onetwo$d, 
+                    paste(one.onetwo$dlow, " - ", one.onetwo$dhigh))
+tableprint[2, ] = c("Author 1 v Author 1 - 3", one.onethree$t,
+                    one.onethree$df, one.onethree$p, one.onethree$d, 
+                    paste(one.onethree$dlow, " - ", one.onethree$dhigh))
+tableprint[3, ] = c("Author 2 v Author 1 - 2", two.onetwo$t,
+                    two.onetwo$df, two.onetwo$p, two.onetwo$d, 
+                    paste(two.onetwo$dlow, " - ", two.onetwo$dhigh))
+tableprint[4, ] = c("Author 2 v Author 2 - 3", two.twothree$t,
+                    two.twothree$df, two.twothree$p, two.twothree$d, 
+                    paste(two.twothree$dlow, " - ", two.twothree$dhigh))
+tableprint[5, ] = c("Author 3 v Author 1 - 3", three.onethree$t,
+                    three.onethree$df, three.onethree$p, three.onethree$d, 
+                    paste(three.onethree$dlow, " - ", three.onethree$dhigh))
+tableprint[6, ] = c("Author 3 v Author 2 - 3", three.twothree$t,
+                    three.twothree$df, three.twothree$p, three.twothree$d, 
+                    paste(three.twothree$dlow, " - ", three.twothree$dhigh))
+apa_table.latex(
+  tableprint, 
+  align = c("l", "c", "c", "c", "c", "c"), 
+  caption = "t Statistics for Hypothesis 2", 
+  note = "Average scores and standard deviations are presented in Table 1.",
+  escape = FALSE,
+  col.names = c("Comparison", "$t$", "$df$", "$p$", "$d$", "$95\\% CI$")
+)
+```
+
+## Hypothesis 3
+
+Last, we examined how semantic space relatedness changed across chapters, herein called semantic drift. The correlation between chapter distance and cosine was calculated for each chapter pairing, and a negative correlation was expected. Table \@ref(tab:drift-analysis) indicates the *t*-values, correlations, and their 95% confidence intervals. Because of the differences in sample size, we examined the strength of the correlation as an indicator of interest. This hypothesis was partially supported, as the overall correlation of chapter distance and cosine was significant and negative, with a small to medium effect size. Within Author 2 showed the most semantic drift across the semantic space, followed by within Author 3, and then within Author 1. While the average cosines were significantly greater than zero from Hypothesis one, the across author correlations for Author 1 to 2 and 1 to 3 were found to be approximately zero. Interestingly, across Author 2 and 3, a small negative correlation appeared. 
+
+```{r drift-analysis, echo = FALSE, results='asis'}
+####distance analysis semantic drift####
+##create distance measure
+master$distance = master$second - master$first
+##overall correlation
+overallcor = cor.test(master$distance, master$cosine)
+##run distance analysis
+output = lapply(split(master, master$patterns), function(X) cor.test(X$distance, X$cosine))
+
+tableprint = matrix(NA, nrow = 7, ncol = 6)
+colnames(tableprint) = c("Correlation", "$t$", "$df$", "$p$", "$r$", "$95 CI$")
+
+tableprint[1, ] = c("Overall", apa(overallcor$statistic, 2, T),
+                    overallcor$parameter, p.value(overallcor$p.value, 3), 
+                    apa(overallcor$estimate, 2, F), 
+                    paste(apa(overallcor$conf.int[1], 2, F), " - ", apa(overallcor$conf.int[2], 2, F)))
+tableprint[2, ] = c("Author 1", apa(output$`1 1`$statistic, 2, T),
+                    output$`1 1`$parameter, p.value(output$`1 1`$p.value, 3), 
+                    apa(output$`1 1`$estimate, 2, F), 
+                    paste(apa(output$`1 1`$conf.int[1], 2, F), " - ", apa(output$`1 1`$conf.int[2], 2, F)))
+tableprint[3, ] = c("Author 2", apa(output$`2 2`$statistic, 2, T),
+                    output$`2 2`$parameter, p.value(output$`2 2`$p.value, 3), 
+                    apa(output$`2 2`$estimate, 2, F), 
+                    paste(apa(output$`2 2`$conf.int[1], 2, F), " - ", apa(output$`2 2`$conf.int[2], 2, F)))
+tableprint[4, ] = c("Author 3", apa(output$`3 3`$statistic, 2, T),
+                    output$`3 3`$parameter, p.value(output$`3 3`$p.value, 3), 
+                    apa(output$`3 3`$estimate, 2, F), 
+                    paste(apa(output$`3 3`$conf.int[1], 2, F), " - ", apa(output$`3 3`$conf.int[2], 2, F)))
+tableprint[5, ] = c("Author 1 - 2", apa(output$`1 2`$statistic, 2, T),
+                    output$`1 2`$parameter, p.value(output$`1 2`$p.value, 3), 
+                    apa(output$`1 2`$estimate, 2, F), 
+                    paste(apa(output$`1 2`$conf.int[1], 2, F), " - ", apa(output$`1 2`$conf.int[2], 2, F)))
+tableprint[6, ] = c("Author 1 - 3", apa(output$`1 3`$statistic, 2, T),
+                    output$`1 3`$parameter, p.value(output$`1 3`$p.value, 3), 
+                    apa(output$`1 3`$estimate, 2, F), 
+                    paste(apa(output$`1 3`$conf.int[1], 2, F), " - ", apa(output$`1 3`$conf.int[2], 2, F)))
+tableprint[7, ] = c("Author 2 - 3", apa(output$`2 3`$statistic, 2, T),
+                    output$`2 3`$parameter, p.value(output$`2 3`$p.value, 3), 
+                    apa(output$`2 3`$estimate, 2, F), 
+                    paste(apa(output$`2 3`$conf.int[1], 2, F), " - ", apa(output$`2 3`$conf.int[2], 2, F)))
+
+apa_table.latex(
+  tableprint,
+  align = c("l", "c", "c", "c", "c", "c"), 
+  caption = "Correlation and t Statistics for Hypothesis 3",
+  escape = FALSE,
+  col.names = c("Correlation", "$t$", "$df$", "$p$", "$r$", "$95\\% CI$")
+  )
+
+```
+
+# Discussion
+
+##Deutero-Isaiah 
+
+This study systematically examined the semantic architecture of Isaiah using Latent Semantic Analysis [@Landauer1997; @Landauer1998]. First, chapter-to-chapter cosines were calculated for relatedness, and we examined if they were statistically different from zero using single sample *t*-tests. This analysis provided a standardized measure for the semantic structures within Isaiah and a basis for further statistical modeling of the text, as these average cosine values were different from zero. Hypothesis two was a natural extension of this concept, comparing within-section cosines to cross-section cosines to determine group similarities within Isaiah. This result led to hypothesis three and the introduction of *semantic drift* across the entirety of Isaiah. Combined with the effect size measurements from previous experiments, quantifying semantic drift gives an incremental measurement of the semantic differences across Isaiah.
+
+Based on the *t*-test results of hypothesis one, it can be concluded that within-author cosines are significantly interrelated to each other. This finding implies that each sub-section of Isaiah forms a thematic group. Also, examining effect size measurements shows that the first authored section of Isaiah demonstrates the least cohesive thematic cosine effect when compared to sections two and three, which demonstrated the largest effect sizes. As a base measure of relatedness, hypothesis one supported strong cohesion within sections two and three with comparatively weaker thematic cosine similarities in section one. The results of hypothesis two portrayed group relatedness among Isaiah's sub-sections. Significant differences were found across all between-group average cosine values. However, in examining effect sizes, we see that within-group cosines of section one yield smaller effects than within-group cosines of sections two and three. Moreover, in examining within-groups cosines of sections two and three against between-groups cosines with section one, we find the largest effects. Effect size presents strong evidence for thematic asymmetry between section one to sections two and three. This result is consistent with scholarly opinion regarding Isaiah, especially regarding the Deutero-Isaiah hypothesis.
+
+While hypothesis two observed larger group effects in Isaiah, hypothesis three quantified incremental semantic changes across the entirety of Isaiah, which we termed *semantic drift*. Overall, there was a significant, small-moderate negative correlation between chapter location and cosine similarity. Moreover, sections two and three demonstrated the largest negative correlations, with section two being statistically significant. While significant, section one's smaller correlation coefficient coupled with the smaller thematic cohesion demonstrated in hypothesis one presents difficulty in interpreting the semantic drift across section one. This result might imply different authorships within section one or a single author with different thematic focuses mashed together. When compared to the more cohesive and significant author two (or even the non-significant but similarly sized author three), the difference in effect sizes is apparent. Practically, these results suggest a clear, directed narrative in author two and, to a lesser extent, author three's writing which is either less prominent in author one, or entirely non-existent.
+
+##Conclusion
+
+In this manuscript, we have demonstrated the usefulness of LSA to hypotheses that are normally subject to only qualitative analyses, which contributes to the scientific literature by performing necessary replication and extension studies [@Schmidt2009], while not exclusively relying on traditional null hypothesis testing criterion [@Cumming2008; @Cumming2014]. One obvious limitation to this study is the use of the English translation of Isaiah; however, the convergent results of our study along with Biblical scholars [@Baltzer2001] provides promising support for the use of LSA in understanding many types of text. Recent studies have shown that both business [@Kulkarni2014] and internet applications [@Wang2015] have benefited from using LSA as an analysis tool. This manuscript extends that literature, thus, allowing researchers multiple avenues to explore their hypotheses in both the qualitative and quantitative realm.
+
+Moreover, this study demonstrates that statistical modeling of a complex text can fortify scholarly opinion within the humanities and other fields. This work suggests new avenues for replication, especially in fields where statistical modeling is less frequently utilized. In this study, we referenced the work of @Ioannidis2005 in order to interpret our inferential statistical findings, relying not only on traditional *p*-value results, but also on effect sizes between groups and a clear delineation of hypotheses. Our work reinforces the reliability of findings in traditionally less statistically driven research areas, such as religious studies and linguistics and fits in line with recent movements in statistical thinking [@Wasserstein2016]. In summation, statistical methodology is widely applicable, both on the edge of scientific development, but also in new and exciting areas of study as a tool for replicating previous findings to reaffirm the theories and work of our fellow researchers.
+
+\newpage
+
+# References
+
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
