@@ -41,7 +41,17 @@ mixcosines = read.csv("Mixed_Cosines.csv")
 #Libraries
 library(reshape)
 
-#Working with reshape
+#Reshape Data with Males as the ID
+View(mixcosines)
+longdata = melt(mixcosines,
+                id = "X",
+                measured = mixcosines[,2:46])
+View(longdata)
+colnames(longdata) = c("Male", "Female", "Cosine")
+
+#Export Final Dataset for Cosines
+write.csv(x = longdata, file = "Mix Gender Cosines Reshape MLSA.csv")
+
 
 
 
