@@ -1,6 +1,6 @@
 #Thisff script create for Mate Preference/LSA data reshaping#
 ##November 15, 2017/Coder: Caleb Z. Marshall (calebzmarshall@gmail.com)
-setwd("~/Desktop/Source")
+setwd("~/Desktop")
 master = read.csv("Overall Dataset MLSA.csv")
 
 View(master)
