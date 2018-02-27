@@ -1,8 +1,8 @@
 ###This script created for PSY 527H Module 13: MLM###
 ####Set working directory and source file####
-setwd("~/Desktop/Source")
+setwd("~/Desktop/Lab Work/Caleb/Caleb Distinction")
 
-master = read.csv("MLSA_MLM_Cosines.csv")
+master = read.csv("Analysis Final MLSA.csv")
 
 #install.packages("nlme")
 #install.packages("reshape")
@@ -15,10 +15,10 @@ summary(master)
 
 
 ####Outliers####
-mahal = mahalanobis(master[, -3],
-                    colMeans(master[, -3], na.rm = TRUE),
-                    cov(master[, -3], use = "pairwise.complete.obs"))
-cutoff = qchisq(1-.001, ncol(master[, -3]))
+mahal = mahalanobis(master[, -c(1:4)],
+                    colMeans(master[, -c(1:4)], na.rm = TRUE),
+                    cov(master[, -c(1:4)], use = "pairwise.complete.obs"))
+cutoff = qchisq(1-.001, ncol(master[, -c(1:4)]))
 
 summary(mahal < cutoff)
 noout = master[mahal < cutoff,]
@@ -26,12 +26,12 @@ noout = master[mahal < cutoff,]
 
 ####Assumptions####
 ###Multicollinearity###
-correlation = cor(master[, -3], use = "pairwise.complete.obs")
+correlation = cor(master[, -c(1:4)], use = "pairwise.complete.obs")
 symnum(correlation)
 
 ###Set-up###
 random = rchisq(nrow(master), 7)
-fake = lm(random ~ ., data = master[,-3])
+fake = lm(random ~ ., data = master[,-c(1:4)])
 fitted = scale(fake$fitted.values)
 standardized = rstudent(fake)
 
@@ -47,42 +47,45 @@ plot(fitted, standardized)
 abline(0,0)
 abline(v = 0)
 
-####Intercept only Linear Model####
+######Analysis######
+####Initial Models####
+###Intercept only Linear Model###
 model1 = gls(cosine ~ 1,
              data = master,
              method = "ML",
              na.action = "na.omit")
 summary(model1)
 
-####Random Intercept Model####
-model2 = lme(cosine ~ 1,
-             data = master,
-             method = "ML",
-             na.action = "na.omit",
-             random = ~1|fem_partno)
+###Random Intercept Model###
+ope_model2 = lme(cosine ~ 1,
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~1|male_partno)
 summary(model2)
 
-####Random Intercept with Predictor####
-model3 = lme(cosine ~ prompt,
+####Openness####
+###Random Intercept with Predictor###
+ope_model1 = lme(cosine ~ openness,
              data = master,
              method = "ML",
              na.action = "na.omit",
-             random = ~1|fem_partno)
-summary(model3)
+             random = ~1|male_partno)
+summary(ope_model1)
 
-####Random Intercept with Predictors####
-model4 = lme(cosine ~ prompt,
+###Random Intercept with Predictors###
+ope_model2 = lme(cosine ~ openness,
              data = master,
              method = "ML",
              na.action = "na.omit",
-             random = ~prompt|fem_partno,
+             random = ~male_partno|fem_partno,
              control = lmeControl(msMaxIter = 200))
-summary(model4)
+summary(ope_model2)
 
 ##Anova for comparison##
-anova(model1, model2, model3, model4)
+anova(ope_model1, ope_model2, ope_model3, ope_model4)
 
-####Effect Size####
+###Effect Size###
 m1 = mean(master[2:551, 4])
 m2 = mean(master[552:1100, 4])
 sd1 = sd(master[2:551, 4])
@@ -90,3 +93,24 @@ sd2 = sd(master[552:1100, 4])
 sdmean = mean(sd1,sd2)
 dvale = (m1 - m2)/sdmean
 
+
+
+####Extraversion####
+###Random Intercept with Predictor###
+ext_model1 = lme(cosine ~ extraversion,
+             data = master,
+             method = "ML",
+             na.action = "na.omit",
+             random = ~1|male_partno)
+summary(ext_model1)
+
+###Random Intercept with Predictors###
+ext_model2 = lme(cosine ~ extraversion,
+             data = master,
+             method = "ML",
+             na.action = "na.omit",
+             random = ~male_partno|fem_partno,
+             control = lmeControl(msMaxIter = 200))
+summary(ext_model2)
+###Model ANOVA###
+anova(model1, model2, ext_model1, ext_model2)

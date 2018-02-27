@@ -34,7 +34,7 @@ final_personality = total_data[-c(8,26,28,44,48,53,54,59,64,67,75,85,95,100,102)
 write.csv(x = final_personality, file = "MLSA Total Personality Band 2.csv")
 
 ####Building Analysis File (Personality Difference Scores)####
-master = read.csv("Analysis MLSA.csv")
+master = read.csv("ALMOST Analysis MLSA.csv")
 View(master)
 
 ####Creating Absolute Difference Scores####
@@ -47,4 +47,4 @@ master$emotional_stability = abs(master$male_emo_stab - master$fem_emo_stab)
 ####Isolating Dependent Variable (Personality Difference Scores)####
 analysis_final = master[,-c(5:14)]
 ####Exporting Final Data Set####
-
+write.csv(x = analysis_final, file = "Analysis Final MLSA.csv")
