@@ -1,4 +1,7 @@
-###This script created for PSY 527H Module 13: MLM###
+#####Author's Note#####
+###Inferential Analysis of MLSA###
+###Created 02/18 by Caleb Marshall (marshall628@live.missouristate.edu)###
+
 ####Set working directory and source file####
 setwd("~/Desktop/Lab Work/Caleb/Caleb Distinction")
 
@@ -57,11 +60,11 @@ model1 = gls(cosine ~ 1,
 summary(model1)
 
 ###Random Intercept Model###
-ope_model2 = lme(cosine ~ 1,
-                 data = master,
-                 method = "ML",
-                 na.action = "na.omit",
-                 random = ~1|male_partno)
+model2 = lme(cosine ~ 1,
+          data = master,
+          method = "ML",
+          na.action = "na.omit",
+          random = ~1|male_partno)
 summary(model2)
 
 ####Openness####
@@ -83,7 +86,7 @@ ope_model2 = lme(cosine ~ openness,
 summary(ope_model2)
 
 ##Anova for comparison##
-anova(ope_model1, ope_model2, ope_model3, ope_model4)
+anova(model1, model2, ope_model1)
 
 ###Effect Size###
 m1 = mean(master[2:551, 4])
@@ -113,4 +116,68 @@ ext_model2 = lme(cosine ~ extraversion,
              control = lmeControl(msMaxIter = 200))
 summary(ext_model2)
 ###Model ANOVA###
-anova(model1, model2, ext_model1, ext_model2)
+anova(model1, model2, ext_model1)
+
+####Agreeableness####
+options(scipen = 999)
+###Random Intercept with Predictor###
+agrb_model1 = lme(cosine ~ agreeableness,
+                  data = master,
+                  method = "ML",
+                  na.action = "na.omit",
+                  random = ~1|male_partno)
+summary(agrb_model1)
+
+###Random Intercept with Predictors###
+agrb_model2 = lme(cosine ~ agreeableness,
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~male_partno|fem_partno,
+                 control = lmeControl(msMaxIter = 200))
+summary(agrb_model2)
+
+###Model ANOVA###
+anova(model1, model2, agrb_model1, agrb_model2)
+
+####Conscientiousness####
+###Random Intercept with Predictor###
+conscs_model1 = lme(cosine ~ conscientiousness,
+                  data = master,
+                  method = "ML",
+                  na.action = "na.omit",
+                  random = ~1|male_partno)
+summary(conscs_model1)
+
+###Random Intercept with Predictors###
+conscs_model2 = lme(cosine ~ conscientiousness,
+                  data = master,
+                  method = "ML",
+                  na.action = "na.omit",
+                  random = ~male_partno|fem_partno,
+                  control = lmeControl(msMaxIter = 200))
+summary(conscs_model2)
+
+###Model ANOVA###
+anova(model1, model2, conscs_model1, conscs_model2)
+
+####Emotional-Stability####
+###Random Intercept with Predictor###
+emo_model1 = lme(cosine ~ emotional_stability,
+                    data = master,
+                    method = "ML",
+                    na.action = "na.omit",
+                    random = ~1|male_partno)
+summary(emo_model1)
+
+###Random Intercept with Predictors###
+emo_model2 = lme(cosine ~ emotional_stability,
+                    data = master,
+                    method = "ML",
+                    na.action = "na.omit",
+                    random = ~male_partno|fem_partno,
+                    control = lmeControl(msMaxIter = 200))
+summary(emo_model2)
+
+###Model ANOVA###
+anova(model1, model2, emo_model1, emo_model2)
