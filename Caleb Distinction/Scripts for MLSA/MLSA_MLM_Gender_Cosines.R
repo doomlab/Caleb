@@ -76,12 +76,19 @@ ope_model1 = lme(cosine ~ openness,
              random = ~1|male_partno)
 summary(ope_model1)
 
+ope_model1 = lme(cosine ~ openness,
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~1|male_partno)
+summary(ope_model1)
+
 ###Random Intercept with Predictors###
 ope_model2 = lme(cosine ~ openness,
              data = master,
              method = "ML",
              na.action = "na.omit",
-             random = ~male_partno|fem_partno,
+             random = ~|fem_partno,
              control = lmeControl(msMaxIter = 200))
 summary(ope_model2)
 
@@ -138,7 +145,7 @@ agrb_model2 = lme(cosine ~ agreeableness,
 summary(agrb_model2)
 
 ###Model ANOVA###
-anova(model1, model2, agrb_model1, agrb_model2)
+anova(model1, model2, agrb_model1)
 
 ####Conscientiousness####
 ###Random Intercept with Predictor###
@@ -159,7 +166,7 @@ conscs_model2 = lme(cosine ~ conscientiousness,
 summary(conscs_model2)
 
 ###Model ANOVA###
-anova(model1, model2, conscs_model1, conscs_model2)
+anova(model1, model2, conscs_model1)
 
 ####Emotional-Stability####
 ###Random Intercept with Predictor###
@@ -180,4 +187,11 @@ emo_model2 = lme(cosine ~ emotional_stability,
 summary(emo_model2)
 
 ###Model ANOVA###
-anova(model1, model2, emo_model1, emo_model2)
+anova(model1, model2, emo_model1)
+
+####Final Info####
+summary(ope_model1)
+summary(ext_model1)
+summary(agrb_model1)
+summary(conscs_model1)
+summary(emo_model1)
