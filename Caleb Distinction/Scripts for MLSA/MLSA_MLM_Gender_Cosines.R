@@ -76,6 +76,25 @@ ope_model1 = lme(cosine ~ openness,
              random = ~1|male_partno)
 summary(ope_model1)
 
+<<<<<<< HEAD
+ope_model1 = lme(cosine ~ openness,
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~1|male_partno)
+summary(ope_model1)
+
+###Random Intercept with Predictors###
+ope_model2 = lme(cosine ~ openness,
+             data = master,
+             method = "ML",
+             na.action = "na.omit",
+             random = ~|fem_partno,
+             control = lmeControl(msMaxIter = 200))
+summary(ope_model2)
+
+=======
+>>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
 ##Anova for comparison##
 anova(model1, model2, ope_model1)
 
@@ -104,7 +123,7 @@ agrb_model1 = lme(cosine ~ agreeableness,
 summary(agrb_model1)
 
 ###Model ANOVA###
-anova(model1, model2, agrb_model1, agrb_model2)
+anova(model1, model2, agrb_model1)
 
 ####Conscientiousness####
 ###Random Intercept with Predictor###
@@ -129,3 +148,13 @@ summary(emo_model1)
 
 ###Model ANOVA###
 anova(model1, model2, emo_model1)
+<<<<<<< HEAD
+
+####Final Info####
+summary(ope_model1)
+summary(ext_model1)
+summary(agrb_model1)
+summary(conscs_model1)
+summary(emo_model1)
+=======
+>>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
