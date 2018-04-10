@@ -76,6 +76,7 @@ ope_model1 = lme(cosine ~ openness,
              random = ~1|male_partno)
 summary(ope_model1)
 
+<<<<<<< HEAD
 ope_model1 = lme(cosine ~ openness,
                  data = master,
                  method = "ML",
@@ -92,18 +93,10 @@ ope_model2 = lme(cosine ~ openness,
              control = lmeControl(msMaxIter = 200))
 summary(ope_model2)
 
+=======
+>>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
 ##Anova for comparison##
 anova(model1, model2, ope_model1)
-
-###Effect Size###
-m1 = mean(master[2:551, 4])
-m2 = mean(master[552:1100, 4])
-sd1 = sd(master[2:551, 4])
-sd2 = sd(master[552:1100, 4])
-sdmean = mean(sd1,sd2)
-dvale = (m1 - m2)/sdmean
-
-
 
 ####Extraversion####
 ###Random Intercept with Predictor###
@@ -114,14 +107,8 @@ ext_model1 = lme(cosine ~ extraversion,
              random = ~1|male_partno)
 summary(ext_model1)
 
-###Random Intercept with Predictors###
-ext_model2 = lme(cosine ~ extraversion,
-             data = master,
-             method = "ML",
-             na.action = "na.omit",
-             random = ~male_partno|fem_partno,
-             control = lmeControl(msMaxIter = 200))
-summary(ext_model2)
+with(master, plot(extraversion, cosine))
+
 ###Model ANOVA###
 anova(model1, model2, ext_model1)
 
@@ -135,15 +122,6 @@ agrb_model1 = lme(cosine ~ agreeableness,
                   random = ~1|male_partno)
 summary(agrb_model1)
 
-###Random Intercept with Predictors###
-agrb_model2 = lme(cosine ~ agreeableness,
-                 data = master,
-                 method = "ML",
-                 na.action = "na.omit",
-                 random = ~male_partno|fem_partno,
-                 control = lmeControl(msMaxIter = 200))
-summary(agrb_model2)
-
 ###Model ANOVA###
 anova(model1, model2, agrb_model1)
 
@@ -155,15 +133,6 @@ conscs_model1 = lme(cosine ~ conscientiousness,
                   na.action = "na.omit",
                   random = ~1|male_partno)
 summary(conscs_model1)
-
-###Random Intercept with Predictors###
-conscs_model2 = lme(cosine ~ conscientiousness,
-                  data = master,
-                  method = "ML",
-                  na.action = "na.omit",
-                  random = ~male_partno|fem_partno,
-                  control = lmeControl(msMaxIter = 200))
-summary(conscs_model2)
 
 ###Model ANOVA###
 anova(model1, model2, conscs_model1)
@@ -177,17 +146,9 @@ emo_model1 = lme(cosine ~ emotional_stability,
                     random = ~1|male_partno)
 summary(emo_model1)
 
-###Random Intercept with Predictors###
-emo_model2 = lme(cosine ~ emotional_stability,
-                    data = master,
-                    method = "ML",
-                    na.action = "na.omit",
-                    random = ~male_partno|fem_partno,
-                    control = lmeControl(msMaxIter = 200))
-summary(emo_model2)
-
 ###Model ANOVA###
 anova(model1, model2, emo_model1)
+<<<<<<< HEAD
 
 ####Final Info####
 summary(ope_model1)
@@ -195,3 +156,5 @@ summary(ext_model1)
 summary(agrb_model1)
 summary(conscs_model1)
 summary(emo_model1)
+=======
+>>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
