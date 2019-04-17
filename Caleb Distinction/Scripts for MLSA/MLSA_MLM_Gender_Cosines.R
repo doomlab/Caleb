@@ -3,9 +3,9 @@
 ###Created 02/18 by Caleb Marshall (marshall628@live.missouristate.edu)###
 
 ####Set working directory and source file####
-setwd("~/Desktop/Lab Work/Caleb/Caleb Distinction")
+#setwd("~/Desktop/Lab Work/Caleb/Caleb Distinction")
 
-master = read.csv("Analysis Final MLSA.csv")
+master = read.csv("../Analysis Final MLSA.csv")
 
 #install.packages("nlme")
 #install.packages("reshape")
@@ -76,25 +76,6 @@ ope_model1 = lme(cosine ~ openness,
              random = ~1|male_partno)
 summary(ope_model1)
 
-<<<<<<< HEAD
-ope_model1 = lme(cosine ~ openness,
-                 data = master,
-                 method = "ML",
-                 na.action = "na.omit",
-                 random = ~1|male_partno)
-summary(ope_model1)
-
-###Random Intercept with Predictors###
-ope_model2 = lme(cosine ~ openness,
-             data = master,
-             method = "ML",
-             na.action = "na.omit",
-             random = ~|fem_partno,
-             control = lmeControl(msMaxIter = 200))
-summary(ope_model2)
-
-=======
->>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
 ##Anova for comparison##
 anova(model1, model2, ope_model1)
 
