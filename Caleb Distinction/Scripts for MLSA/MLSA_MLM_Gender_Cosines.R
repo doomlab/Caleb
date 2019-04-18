@@ -3,12 +3,11 @@
 ###Created 02/18 by Caleb Marshall (marshall628@live.missouristate.edu)###
 
 ####Set working directory and source file####
+
 setwd("~/Desktop/Caleb/Caleb Distinction")
 
-master = read.csv("Analysis Final MLSA.csv")
+master = read.csv("../Analysis Final MLSA.csv")
 
-#install.packages("nlme")
-#install.packages("reshape")
 library(nlme)
 library(reshape)
 
@@ -50,6 +49,13 @@ plot(fitted, standardized)
 abline(0,0)
 abline(v = 0)
 
+psych::describe(noout$cosine)
+# psych::describe(noout$openness)
+# psych::describe(noout$extraversion)
+# psych::describe(noout$agreeableness)
+# psych::describe(noout$conscientiousness)
+# psych::describe(noout$emotional_stability)
+
 ######Analysis######
 ####Initial Models####
 ###Intercept only Linear Model###
@@ -76,25 +82,13 @@ ope_model1 = lme(cosine ~ openness,
              random = ~1|male_partno)
 summary(ope_model1)
 
-<<<<<<< HEAD
-ope_model1 = lme(cosine ~ openness,
+ope_model12 = lme(cosine ~ scale(openness),
                  data = master,
                  method = "ML",
                  na.action = "na.omit",
                  random = ~1|male_partno)
-summary(ope_model1)
+summary(ope_model12)
 
-###Random Intercept with Predictors###
-ope_model2 = lme(cosine ~ openness,
-             data = master,
-             method = "ML",
-             na.action = "na.omit",
-             random = ~|fem_partno,
-             control = lmeControl(msMaxIter = 200))
-summary(ope_model2)
-
-=======
->>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
 ##Anova for comparison##
 anova(model1, model2, ope_model1)
 
@@ -109,6 +103,13 @@ summary(ext_model1)
 
 with(master, plot(extraversion, cosine))
 
+ext_model12 = lme(cosine ~ scale(extraversion),
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~1|male_partno)
+summary(ext_model12)
+
 ###Model ANOVA###
 anova(model1, model2, ext_model1)
 
@@ -122,6 +123,13 @@ agrb_model1 = lme(cosine ~ agreeableness,
                   random = ~1|male_partno)
 summary(agrb_model1)
 
+agrb_model12 = lme(cosine ~ scale(agreeableness),
+                  data = master,
+                  method = "ML",
+                  na.action = "na.omit",
+                  random = ~1|male_partno)
+summary(agrb_model12)
+
 ###Model ANOVA###
 anova(model1, model2, agrb_model1)
 
@@ -133,6 +141,13 @@ conscs_model1 = lme(cosine ~ conscientiousness,
                   na.action = "na.omit",
                   random = ~1|male_partno)
 summary(conscs_model1)
+
+conscs_model12 = lme(cosine ~ scale(conscientiousness),
+                    data = master,
+                    method = "ML",
+                    na.action = "na.omit",
+                    random = ~1|male_partno)
+summary(conscs_model12)
 
 ###Model ANOVA###
 anova(model1, model2, conscs_model1)
@@ -146,15 +161,12 @@ emo_model1 = lme(cosine ~ emotional_stability,
                     random = ~1|male_partno)
 summary(emo_model1)
 
+emo_model12 = lme(cosine ~ scale(emotional_stability),
+                 data = master,
+                 method = "ML",
+                 na.action = "na.omit",
+                 random = ~1|male_partno)
+summary(emo_model12)
+
 ###Model ANOVA###
 anova(model1, model2, emo_model1)
-<<<<<<< HEAD
-
-####Final Info####
-summary(ope_model1)
-summary(ext_model1)
-summary(agrb_model1)
-summary(conscs_model1)
-summary(emo_model1)
-=======
->>>>>>> e3e742aabadf0b7c785cf0648d43c994f629df99
