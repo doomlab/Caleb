@@ -3,7 +3,7 @@
 ###Created 02/18 by Caleb Marshall (marshall628@live.missouristate.edu)###
 
 ####Set working directory and source file####
-setwd("~/Desktop/Lab Work/Caleb/Caleb Distinction")
+setwd("~/Desktop/Caleb/Caleb Distinction")
 
 master = read.csv("Analysis Final MLSA.csv")
 
